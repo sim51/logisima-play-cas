@@ -1,0 +1,7 @@
+# import these default routes as :
+# *         /               module:secureCAS
+# ~~~~
+
+GET			/login			SecureCAS.login
+POST        /login          SecureCAS.authenticate
+GET         /logout         SecureCAS.logout
