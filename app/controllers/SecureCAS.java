@@ -239,10 +239,12 @@ public class SecureCAS extends Controller {
             return session.contains("username");
         }
 
-        public static void onAuthenticated() {
+        static void onAuthenticated() {
+            Logger.debug("[SecureCAS]: onAutenticated method");
         }
 
         static void onDisconnected() {
+            Logger.debug("[SecureCAS]: onDisconnected method");
         }
 
         public static void onCheckFailed(String profile) {
