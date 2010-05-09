@@ -71,7 +71,7 @@ public class SecureCAS extends Controller {
      * 
      * @throws Throwable
      */
-    @Before(unless = { "fail", "login", "authenticate", "logout" })
+    @Before(unless = { "fail", "login", "logout" })
     static void checkAccess() throws Throwable {
         Logger.debug("[SecureCAS]: checkAccess " + request.url);
 

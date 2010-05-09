@@ -2,6 +2,5 @@
 # *         /               module:logisima-cas
 # ~~~~
 
-GET			/login			SecureCAS.login
-POST        /login          SecureCAS.authenticate
+GET         /login          SecureCAS.login
 GET         /logout         SecureCAS.logout
