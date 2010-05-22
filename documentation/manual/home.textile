@@ -72,4 +72,4 @@ public class Application extends Controller {
 </pre>
 
 <h2><a>Retrieving the connected user</a></h2>
-<p>In your application, if you want to know who is connected (the usernam /login), you can call the static method Security.connected().
+<p>In your application, if you want to know who is connected (the usernam /login), you can call the static method Security.connected().</p>

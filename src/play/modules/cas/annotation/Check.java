@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with LogiSima-play-cas.  If not, see <http://www.gnu.org/licenses/>.
  */
-package controllers;
+package play.modules.cas.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

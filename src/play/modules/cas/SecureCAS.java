@@ -14,16 +14,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with LogiSima-play-cas.  If not, see <http://www.gnu.org/licenses/>.
  */
-package controllers;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
+package play.modules.cas;
 
 import play.Logger;
 import play.Play;
+import play.modules.cas.annotation.Check;
 import play.mvc.Before;
 import play.mvc.Controller;
-import play.utils.Java;
 import edu.yale.its.tp.cas.client.ServiceTicketValidator;
 
 /**
@@ -35,9 +32,10 @@ import edu.yale.its.tp.cas.client.ServiceTicketValidator;
  * 
  */
 public class SecureCAS extends Controller {
-    
+
     /**
-     * Method call for the logout route. We simply redirect the user to CAS logout page.
+     * Method call for the logout route. We simply redirect the user to CAS
+     * logout page.
      * 
      * @throws Throwable
      */
@@ -54,7 +52,13 @@ public class SecureCAS extends Controller {
      * @throws Throwable
      */
     public static void login() throws Throwable {
-        redirectToCas();
+        // Here we lokk if there is the gateway into flsah scope. This is to do
+        // the dif between the login method (gateway OK) and the login action (gateway KO).
+        if (flash.get("gateway") != null) {
+            redirectToCas(Boolean.TRUE);
+        } else {
+            redirectToCas(Boolean.FALSE);
+        }
     }
 
     /**
@@ -78,13 +82,14 @@ public class SecureCAS extends Controller {
         // Authent
         if (!session.contains("username")) {
             Logger.debug("[SecureCAS]: session doesn't contain a username");
-            flash.put("url", request.method == "GET" ? request.url : "/");
+            session.put("url", request.method == "GET" ? request.url : "/");
             String ticket = params.get("ticket");
             if (ticket != null) {
                 flash.put("params", params);
                 Logger.debug("[SecureCAS]: validate ticket " + ticket + " by CAS");
                 valideCasTicket(ticket);
             }
+            flash.put("gateway", Boolean.TRUE);
             login();
         }
         // Checks
@@ -99,7 +104,8 @@ public class SecureCAS extends Controller {
     }
 
     /**
-     * Function to check the rights of the user. See your implementation of the Security class with the method check.
+     * Function to check the rights of the user. See your implementation of the
+     * Security class with the method check.
      * 
      * @param check
      * @throws Throwable
@@ -108,7 +114,7 @@ public class SecureCAS extends Controller {
         for (String profile : check.value()) {
             boolean hasProfile = (Boolean) Security.invoke("check", profile);
             if (!hasProfile) {
-                Security.invoke("[SecureCAS]: onCheckFailed", profile);
+                Security.invoke("onCheckFailed", profile);
             }
         }
     }
@@ -116,76 +122,92 @@ public class SecureCAS extends Controller {
     /**
      * Method to redirect the user to CAS login page.
      * 
+     * @param gateway
      * @throws Throwable
      */
-    private static void redirectToCas() throws Throwable {
+    private static void redirectToCas(Boolean gateway) throws Throwable {
         String urlCas = Play.configuration.getProperty("cas.loginUrl");
-        String url = flash.get("url");
-        if (url == null) {
-            url = "/";
+
+        // Service URL (mandatory for proxy CAS !!!
+        if (Play.configuration.getProperty("cas.serviceUrl") != null && !Play.configuration.getProperty("cas.serviceUrl").equals("")) {
+            urlCas = urlCas + "?service=" + Play.configuration.getProperty("cas.serviceUrl");
+        } else {
+            String url = flash.get("url");
+            if (url == null) {
+                url = "/";
+            }
+            urlCas = urlCas + "?service=" + request.getBase() + url;
         }
-        Logger.debug("[SecureCAS]: redirect to cas :" + urlCas + "?service=" + request.getBase() + url);
-        redirect(urlCas + "?service=" + request.getBase() + url);
+
+        // Gateway feature
+        if (gateway && Boolean.valueOf(Play.configuration.getProperty("cas.gateway"))) {
+            urlCas = urlCas + "&gateway=true";
+        }
+
+        Logger.debug("[SecureCAS]: redirect to cas :" + urlCas);
+        redirect(urlCas);
     }
-    
+
     /**
      * Method that verify if the cas ticket is valid.
      * 
-     * @param ticket the cas ticket.
+     * @param ticket
+     *            the cas ticket.
      * @throws Throwable
      */
     private static void valideCasTicket(String ticket) throws Throwable {
-        try{
-        // Init
-        String username = "";
-        boolean isvalid = false;
-        String url = flash.get("url");
-        if (url == null) {
-            url = "/";
-        }
-        // Instantiate a new ServiceTicketValidator
-        Logger.debug("[SecureCAS]: Try to validate ticket " + ticket + " for service " + getUrlwithoutTicket(ticket));
-        ServiceTicketValidator sv = new ServiceTicketValidator();
-        // Set its parameters
-        sv.setCasValidateUrl(Play.configuration.getProperty("cas.validateUrl"));
-        sv.setService(getUrlwithoutTicket(ticket));
-        sv.setServiceTicket(ticket);
-        sv.validate();
+        try {
+            // Init
+            String username = "";
+            boolean isvalid = false;
+            String url = flash.get("url");
+            if (url == null) {
+                url = "/";
+            }
+            // Instantiate a new ServiceTicketValidator
+            Logger.debug("[SecureCAS]: Try to validate ticket " + ticket + " for service " + getUrlwithoutTicket(ticket));
+            ServiceTicketValidator sv = new ServiceTicketValidator();
+            // Set its parameters
+            sv.setCasValidateUrl(Play.configuration.getProperty("cas.validateUrl"));
+            sv.setService(getUrlwithoutTicket(ticket));
+            sv.setServiceTicket(ticket);
+            sv.validate();
 
-        if (sv.isAuthenticationSuccesful()) {
-            username = sv.getUser();
-            isvalid = (Boolean) Security.invoke("authentify", username);
-            session.put("username", username);
-            Logger.debug("[SecureCAS]: User " + username + " is authenticated");
-        } else {
-            Logger.debug("[SecureCAS]: User is not authenticated");
-        }
+            if (sv.isAuthenticationSuccesful()) {
+                username = sv.getUser();
+                isvalid = (Boolean) Security.invoke("authentify", username);
+                session.put("username", username);
+                Logger.debug("[SecureCAS]: User " + username + " is authenticated");
+            } else {
+                Logger.debug("[SecureCAS]: User is not authenticated");
+            }
 
-        if (!isvalid) {
-            flash.keep("url");
-            flash.error("secure.error");
-            params.flash();
-            fail();
-            return;
-        }
-        Logger.info("[SecureCAS]: authenticate : " + params);
+            if (!isvalid) {
+                flash.keep("url");
+                flash.error("secure.error");
+                params.flash();
+                fail();
+                return;
+            }
 
-        // Redirect to the URL without ticket)
-        if (params.get("ticket") != null) {
-            url = getUrlwithoutTicket(ticket);
-            Logger.info("redirect to url " + url);
-            flash.put("url", url);
-        }
-        // Do the redirection
-        redirectToOriginalURL();
-        }
-        catch(Exception e){
+            Logger.info("[SecureCAS]: authenticate : " + params);
+
+            // Redirect to the URL without ticket
+            if (params.get("ticket") != null) {
+                url = getUrlwithoutTicket(ticket);
+                Logger.info("redirect to url " + url);
+                flash.put("url", url);
+            }
+            // Do the redirection
+            redirectToOriginalURL();
+        } catch (Exception e) {
             throw new Throwable(e);
         }
     }
 
     /**
-     * Method that redirect the user to the original URL (argument url in the flash scope).
+     * Method that redirect the user to the original URL (argument url in the
+     * flash scope).
      * 
      * @throws Throwable
      */
@@ -201,7 +223,8 @@ public class SecureCAS extends Controller {
     /**
      * Function to return the url without the cas ticket.
      * 
-     * @param ticket the cas ticket
+     * @param ticket
+     *            the cas ticket
      * @return
      * @throws Throwable
      */
@@ -213,60 +236,6 @@ public class SecureCAS extends Controller {
         url = url.replace("ticket=" + ticket, "");
         Logger.info("url is " + url);
         return url;
-    }
-
-    /**
-     * The security interface.
-     * 
-     * @author bsimard
-     *
-     */
-    public static class Security extends Controller {
-
-        public static boolean authentify(String username) {
-            return true;
-        }
-
-        public static boolean check(String profile) {
-            return true;
-        }
-
-        public static String connected() {
-            return session.get("username");
-        }
-
-        public static boolean isConnected() {
-            return session.contains("username");
-        }
-
-        static void onAuthenticated() {
-            Logger.debug("[SecureCAS]: onAutenticated method");
-        }
-
-        static void onDisconnected() {
-            Logger.debug("[SecureCAS]: onDisconnected method");
-        }
-
-        public static void onCheckFailed(String profile) {
-            forbidden();
-        }
-
-        private static Object invoke(String m, Object... args) throws Throwable {
-            Logger.info(m);
-            Class security = null;
-            List<Class> classes = Play.classloader.getAssignableClasses(Security.class);
-            if (classes.size() == 0) {
-                security = Security.class;
-            } else {
-                security = classes.get(0);
-            }
-            try {
-                return Java.invokeStaticOrParent(security, m, args);
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
-        }
-
     }
 
 }
