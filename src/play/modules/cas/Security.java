@@ -21,6 +21,7 @@ import java.util.List;
 
 import play.Logger;
 import play.Play;
+import play.modules.cas.models.CASUser;
 import play.mvc.Controller;
 import play.utils.Java;
 
@@ -67,7 +68,7 @@ public class Security extends Controller {
      * This method is called just after the user authentification (when ST is
      * validated).
      */
-    static void onAuthenticated() {
+    static void onAuthenticated(CASUser user) {
         Logger.debug("[SecureCAS]: onAutenticated method");
     }
 
