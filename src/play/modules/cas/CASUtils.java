@@ -92,17 +92,33 @@ public class CASUtils {
      */
     private static String getCasProxyCallBackUrl() {
         String casProxyCallBackUrl = Play.configuration.getProperty("application.url");
+        //proxy call back url must be in https
+        casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
         casProxyCallBackUrl += Router.reverse("modules.cas.SecureCAS.pgtCallBack").url;
         return casProxyCallBackUrl;
     }
     
     /**
-     * Method that return cas proxy url
+     * Method that return cas proxy url.
+     * 
      * @return
      */
     private static String getCasProxyUrl(){
         String casProxyUrl = Play.configuration.getProperty("cas.proxyUrl");
         return casProxyUrl;
+    }
+    
+    /**
+     * Method to know if proxy cas is enabled (by testing conf).
+     * 
+     * @return
+     */
+    private static Boolean isProxyCas(){
+        Boolean isProxyCas = Boolean.FALSE; 
+        if(Play.configuration.getProperty("cas.proxyUrl")!=null && !Play.configuration.getProperty("cas.proxyUrl").equals("")){
+            isProxyCas = Boolean.TRUE;
+        }
+        return isProxyCas;
     }
 
     /**
@@ -121,7 +137,9 @@ public class CASUtils {
 
         // Set its parameters
         sv.setCasValidateUrl(Play.configuration.getProperty("cas.validateUrl"));
-        sv.setProxyCallbackUrl(getCasProxyCallBackUrl());
+        if(isProxyCas()){
+            sv.setProxyCallbackUrl(getCasProxyCallBackUrl());
+        }
         sv.setService(getCasServiceUrl());
         sv.setServiceTicket(ticket);
         // ticket validation
@@ -137,17 +155,26 @@ public class CASUtils {
             user.setUsername(sv.getUser());
             user.setAttribut(casAttribut);
             
-            // here we get PGT from cache
-            String pgt = (String) Cache.get(sv.getPgtIou());
-            Cache.delete(sv.getPgtIou());
-
-            // we put in cache PGT with PGT_username
-            Cache.add("pgt_" + user.getUsername(), pgt);
+            if(isProxyCas()){
+                // here we get PGT from cache
+                String pgt = (String) Cache.get(sv.getPgtIou());
+                Cache.delete(sv.getPgtIou());
+    
+                // we put in cache PGT with PGT_username
+                Cache.add("pgt_" + user.getUsername(), pgt);
+            }
         }
 
         return user;
     }
     
+    /**
+     * Method to get CAS atribut from cas response.
+     * 
+     * @param xml
+     * @return
+     * @throws SAXException
+     */
     private static Map<String, String> getCasAttributes(String xml) throws SAXException{
         Map<String, String> casAttribut = null; 
         if (xml.indexOf("<cas:attributes>") != -1) {

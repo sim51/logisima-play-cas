@@ -5,4 +5,5 @@
 GET         /login          modules.cas.SecureCAS.login
 GET         /logout         modules.cas.SecureCAS.logout
 GET         /authenticate   modules.cas.SecureCAS.authenticate
+GET         /pgtcallbackurl modules.cas.SecureCAS.pgtCallBack
 
