@@ -17,17 +17,22 @@
 package play.modules.cas;
 
 import java.io.IOException;
+import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
-import edu.yale.its.tp.cas.client.ServiceTicketValidator;
 import play.Logger;
 import play.Play;
+import play.cache.Cache;
 import play.modules.cas.models.CASUser;
 import play.mvc.Router;
-import play.mvc.Http.Request;
+import edu.yale.its.tp.cas.client.ServiceTicketValidator;
+import edu.yale.its.tp.cas.proxy.ProxyTicketReceptor;
+import edu.yale.its.tp.cas.util.SecureURL;
 
 /**
  * Utils class for CAS.
@@ -39,7 +44,8 @@ public class CASUtils {
 
     /**
      * Method that generate the CAS login page URL.
-     * @param request 
+     * 
+     * @param request
      * 
      * @param possibleGateway
      * @throws Throwable
@@ -48,8 +54,7 @@ public class CASUtils {
         String casLoginUrl = Play.configuration.getProperty("cas.loginUrl");
 
         // we add the service URL (the reverse route for SecureCas.
-        casLoginUrl += "?service=";
-        casLoginUrl += getCasServiceUrl();
+        casLoginUrl += "?service=" + getCasServiceUrl();
 
         // Gateway feature
         if (possibleGateway && Boolean.valueOf(Play.configuration.getProperty("cas.gateway"))) {
@@ -70,43 +75,112 @@ public class CASUtils {
     }
 
     /**
-     * Method that return the service url.
+     * Method that return service url.
      * 
      * @throws Throwable
      */
-    public static String getCasServiceUrl() {
+    private static String getCasServiceUrl() {
         String casServiceUrl = Play.configuration.getProperty("application.url");
         casServiceUrl += Router.reverse("modules.cas.SecureCAS.authenticate").url;
         return casServiceUrl;
     }
 
     /**
-     * Method that verify if the cas ticket is valid.
+     * Method that return proxy call back url.
      * 
-     * @param ticket cas tickets
-     * @throws ParserConfigurationException 
-     * @throws SAXException 
-     * @throws IOException 
      * @throws Throwable
      */
-    public static CASUser valideCasTicket(Request request,String ticket) throws IOException, SAXException, ParserConfigurationException {
+    private static String getCasProxyCallBackUrl() {
+        String casProxyCallBackUrl = Play.configuration.getProperty("application.url");
+        casProxyCallBackUrl += Router.reverse("modules.cas.SecureCAS.pgtCallBack").url;
+        return casProxyCallBackUrl;
+    }
+    
+    /**
+     * Method that return cas proxy url
+     * @return
+     */
+    private static String getCasProxyUrl(){
+        String casProxyUrl = Play.configuration.getProperty("cas.proxyUrl");
+        return casProxyUrl;
+    }
+
+    /**
+     * Method that verify if the cas ticket is valid.
+     * 
+     * @param ticket
+     *            cas tickets
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws IOException
+     * @throws Throwable
+     */
+    public static CASUser valideCasTicket(String ticket) throws IOException, SAXException, ParserConfigurationException {
         // Instantiate a new ServiceTicketValidator
         ServiceTicketValidator sv = new ServiceTicketValidator();
-        
+
         // Set its parameters
         sv.setCasValidateUrl(Play.configuration.getProperty("cas.validateUrl"));
+        sv.setProxyCallbackUrl(getCasProxyCallBackUrl());
         sv.setService(getCasServiceUrl());
         sv.setServiceTicket(ticket);
+        // ticket validation
         sv.validate();
 
         // we retrieve CAS user from the response
         CASUser user = null;
         if (sv.isAuthenticationSuccesful()) {
+            Map<String, String> casAttribut = null;
+            casAttribut = getCasAttributes(sv.getResponse());
+            // we populate the CASUser
             user = new CASUser();
             user.setUsername(sv.getUser());
+            user.setAttribut(casAttribut);
+            
+            // here we get PGT from cache
+            String pgt = (String) Cache.get(sv.getPgtIou());
+            Cache.delete(sv.getPgtIou());
+
+            // we put in cache PGT with PGT_username
+            Cache.add("pgt_" + user.getUsername(), pgt);
         }
-        
+
         return user;
+    }
+    
+    private static Map<String, String> getCasAttributes(String xml) throws SAXException{
+        Map<String, String> casAttribut = null; 
+        if (xml.indexOf("<cas:attributes>") != -1) {
+            XMLReader reader = XMLReaderFactory.createXMLReader();
+        }
+        return casAttribut;
+        
+    }
+
+    /**
+     * Method to get a proxy ticket.
+     * 
+     * @param username
+     * @param serviceName
+     * @return
+     * @throws IOException
+     */
+    public static String getProxyTicket(String username, String serviceName) throws IOException {
+        String proxyTicket = null;
+        String pgt = (String) Cache.get("pgt_" + username);
+        String url = getCasProxyUrl() + "?pgt=" + pgt + "&targetService=" + serviceName;
+        String response = SecureURL.retrieve(url);
+
+        // parse this response (use a lightweight approach for now)
+        if (response.indexOf("<cas:proxySuccess>") != -1 && response.indexOf("<cas:proxyTicket>") != -1) {
+            int startIndex = response.indexOf("<cas:proxyTicket>") + "<cas:proxyTicket>".length();
+            int endIndex = response.indexOf("</cas:proxyTicket>");
+            proxyTicket = response.substring(startIndex, endIndex);
+        } else {
+            Logger.error("CAS server responded with error for request [" + url + "].  Full response was [" + response + "]");
+        }
+        Logger.debug("[SecureCAS]: PT for user " + username + " and service " + serviceName + " is " + proxyTicket);
+        return proxyTicket;
     }
 
 }

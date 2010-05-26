@@ -1,4 +1,4 @@
-This module is the same as the secure module (a lot of code is the same), but with a CAS server.
+This module is similar as secure module, but with a CAS server.
 
 Configure your application.conf with the rights properties and use the entity “@With(SecureCAS.class)” instead of “@With(Secure.class)”.
 

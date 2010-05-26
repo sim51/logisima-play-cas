@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="app"/>
-	<classpathentry kind="lib" path="lib/casclient.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/activation.jar"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/antlr-2.7.6.jar"/>
@@ -58,5 +57,6 @@
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/WikiText.jar"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/ZDB.jar"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/play.jar" sourcepath="/usr/local/play/play-1.1/framework/src"/>
+	<classpathentry kind="lib" path="lib/casclient-2.1.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

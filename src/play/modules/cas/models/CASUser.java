@@ -27,7 +27,7 @@ import java.util.Map;
 public class CASUser {
     
     private String username;
-    private Map<String, Object> attribut;
+    private Map<String, String> attribut;
     
     public String getUsername() {
         return username;
@@ -35,10 +35,10 @@ public class CASUser {
     public void setUsername(String username) {
         this.username = username;
     }
-    public Map<String, Object> getAttribut() {
+    public Map<String, String> getAttribut() {
         return attribut;
     }
-    public void setAttribut(Map<String, Object> attribut) {
+    public void setAttribut(Map<String, String> attribut) {
         this.attribut = attribut;
     }
     

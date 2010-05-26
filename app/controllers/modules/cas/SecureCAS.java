@@ -17,6 +17,7 @@
 package controllers.modules.cas;
 
 import play.Logger;
+import play.cache.Cache;
 import play.modules.cas.CASUtils;
 import play.modules.cas.Security;
 import play.modules.cas.annotation.Check;
@@ -49,15 +50,18 @@ public class SecureCAS extends Controller {
     }
 
     /**
-     * Action for the logout route. We simply redirect the user to CAS logout
-     * page.
+     * Action for the logout route. We clear cache & session and redirect the user to CAS
+     * logout page.
      * 
      * @throws Throwable
      */
     public static void logout() throws Throwable {
+        // we clear cache
+        Cache.delete("pgt_" + session.get("username"));
+        
         // we clear session
         session.clear();
-
+        
         // we invoke the implementation of "onDisconnected"
         Security.invoke("onDisconnected");
 
@@ -74,7 +78,7 @@ public class SecureCAS extends Controller {
     public static void fail() throws Throwable {
         render();
     }
-    
+
     /**
      * Action for the CAS return.
      * 
@@ -85,16 +89,16 @@ public class SecureCAS extends Controller {
         String ticket = params.get("ticket");
         if (ticket != null) {
             Logger.debug("[SecureCAS]: Try to validate ticket " + ticket);
-            CASUser user = CASUtils.valideCasTicket(request, ticket);
-            if(user != null){
+            CASUser user = CASUtils.valideCasTicket(ticket);
+            if (user != null) {
                 isAuthenticated = Boolean.TRUE;
                 session.put("username", user.getUsername());
-                // we invoke the implementation of onAuthenticate 
+                // we invoke the implementation of onAuthenticate
                 Security.invoke("onAuthenticated", user);
             }
         }
-        
-        if(isAuthenticated){
+
+        if (isAuthenticated) {
             // we redirect to the original URL
             String url = flash.get("url");
             if (url == null) {
@@ -102,10 +106,27 @@ public class SecureCAS extends Controller {
             }
             Logger.debug("[SecureCAS]: redirect to url -> " + url);
             redirect(url);
+        } else {
+            fail();
+        }
+    }
+
+    /**
+     * Action for the proxy call back url.
+     */
+    public static void pgtCallBack() throws Throwable {
+        // CAS server call this URL with PGTIou & PGTId
+        String pgtIou = params.get("pgtIou");
+        String pgtId = params.get("pgtId");
+
+        // here we put in cache PGT with PGTIOU as key
+        if (pgtIou != null || pgtId != null) {
+            Cache.set(pgtIou, pgtId);
         }
         else{
-            error();
+            error("Missing parameter !!!");
         }
+
     }
 
     /**
@@ -113,8 +134,8 @@ public class SecureCAS extends Controller {
      * 
      * @throws Throwable
      */
-    @Before(unless = { "login", "logout", "fail", "authenticate" })
-    static void filter() throws Throwable {
+    @Before(unless = { "login", "logout", "fail", "authenticate", "pgtCallBack" })
+    public static void filter() throws Throwable {
         Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
 
         // if user is authenticated, the username is in session !
