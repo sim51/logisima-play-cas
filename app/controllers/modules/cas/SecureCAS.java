@@ -19,7 +19,6 @@ package controllers.modules.cas;
 import play.Logger;
 import play.cache.Cache;
 import play.modules.cas.CASUtils;
-import play.modules.cas.Security;
 import play.modules.cas.annotation.Check;
 import play.modules.cas.models.CASUser;
 import play.mvc.Before;

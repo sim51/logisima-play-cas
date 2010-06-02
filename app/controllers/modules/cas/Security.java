@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with LogiSima-play-cas.  If not, see <http://www.gnu.org/licenses/>.
  */
-package play.modules.cas;
+package controllers.modules.cas;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
