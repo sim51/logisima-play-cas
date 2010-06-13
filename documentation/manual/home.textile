@@ -20,8 +20,8 @@
 </p>
 <pre>
 	<code>
-		# Import Secure routes
-		*    /    module:logisima-cas
+	# Import Secure routes
+	*    /    module:logisima-cas
 	</code>
 </pre>
 
@@ -32,10 +32,10 @@
 </p>
 <pre>
 	<code>
-		cas.validateUrl=https://www.logisima.com/cas/serviceValidate
-		cas.loginUrl=https://www.logisima.com/cas/loginUrl
-		cas.logoutUrl=https://www.logisima.com/cas/logoutUrl
-		cas.gateway=false
+	cas.validateUrl=https://www.logisima.com/cas/serviceValidate
+	cas.loginUrl=https://www.logisima.com/cas/loginUrl
+	cas.logoutUrl=https://www.logisima.com/cas/logoutUrl
+	cas.gateway=false
 	</code>
 </pre>
 <h3><a>Configuration for Proxy CASification</a></h3>
@@ -44,8 +44,8 @@
 </p>
 <pre>
 	<code>
-		cas.proxyUrl=https://www.logisima.com/cas/proxy
-		application.url.ssl=https://localhost:8443
+	cas.proxyUrl=https://www.logisima.com/cas/proxy
+	application.url.ssl=https://localhost:8443
 	</code>
 </pre>
 <p>NB: "application.url.ssl" is useful to specify the SSL url of your application. By default, module generate this url with "application.url" property, and replace http by https</p>
@@ -58,14 +58,14 @@
 </p>
 <pre>
 	<code>
-		@With(SecureCAS.class)
-		public class Application extends Controller {
-		    
-		    public static void index() {
-		        render();
-		    }
-		    
-		}
+	@With(SecureCAS.class)
+	public class Application extends Controller {
+	    
+	    public static void index() {
+	        render();
+	    }
+	    
+	}
 	</code>
 </pre>
 
@@ -80,16 +80,16 @@
 </p>
 <pre>
 	<code>
-		package controllers;
-		 
-		public class Security extends SecureCAS.Security {
-		    
-		    public static boolean authenticate(String username, String password) {
-		        User user = User.find("byEmail", username).first();
-		        return user != null && user.password.equals(password);
-		    }    
-		    
-		}
+	package controllers;
+	 
+	public class Security extends SecureCAS.Security {
+	    
+	    public static boolean authenticate(String username, String password) {
+	        User user = User.find("byEmail", username).first();
+	        return user != null && user.password.equals(password);
+	    }    
+	    
+	}
 	</code>
 </pre>
 
@@ -108,6 +108,6 @@
 </p>
 <pre>
 	<code>
-		String myPT = CASUtils.getProxyTicket(Security.connected(), "http://localhost:8080/foo")
+	String myPT = CASUtils.getProxyTicket(Security.connected(), "http://localhost:8080/foo")
 	</code>
 </pre>
