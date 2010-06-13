@@ -3,7 +3,7 @@
 	This module allows you to set up an authentication with a <a href="http://www.jasig.org/cas">CAS server</a> and to managed authorization. It is based on the <a href="http://www.playframework.org/documentation/1.0.2.1/secure">Secure module</a>.   
 </p>
 
-<h2><a>Enable the LogiSima Play CAS</a></h2>
+<h2><a>Enable LogiSima Play CAS</a></h2>
 <p>
 	In the conf/application.conf file, enable the LogiSima Play CAS module with this line :
 </p>

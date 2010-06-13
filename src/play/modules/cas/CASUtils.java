@@ -91,9 +91,15 @@ public class CASUtils {
      * @throws Throwable
      */
     private static String getCasProxyCallBackUrl() {
-        String casProxyCallBackUrl = Play.configuration.getProperty("application.url");
+        String casProxyCallBackUrl = "";
         //proxy call back url must be in https
-        casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
+        if(Play.configuration.getProperty("application.url.ssl") != null && !Play.configuration.getProperty("application.url.ssl").equals("")){
+            casProxyCallBackUrl = Play.configuration.getProperty("application.url.ssl");
+        }
+        else{
+            casProxyCallBackUrl = Play.configuration.getProperty("application.url");
+            casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
+        }
         casProxyCallBackUrl += Router.reverse("modules.cas.SecureCAS.pgtCallBack").url;
         return casProxyCallBackUrl;
     }
