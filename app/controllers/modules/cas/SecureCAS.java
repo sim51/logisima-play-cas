@@ -122,10 +122,6 @@ public class SecureCAS extends Controller {
         if (pgtIou != null || pgtId != null) {
             Cache.set(pgtIou, pgtId);
         }
-        else{
-            error("Missing parameter !!!");
-        }
-
     }
 
     /**
