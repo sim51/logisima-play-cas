@@ -49,18 +49,18 @@ public class SecureCAS extends Controller {
     }
 
     /**
-     * Action for the logout route. We clear cache & session and redirect the user to CAS
-     * logout page.
+     * Action for the logout route. We clear cache & session and redirect the
+     * user to CAS logout page.
      * 
      * @throws Throwable
      */
     public static void logout() throws Throwable {
         // we clear cache
         Cache.delete("pgt_" + session.get("username"));
-        
+
         // we clear session
         session.clear();
-        
+
         // we invoke the implementation of "onDisconnected"
         Security.invoke("onDisconnected");
 
@@ -75,7 +75,7 @@ public class SecureCAS extends Controller {
      * @throws Throwable
      */
     public static void fail() throws Throwable {
-        render();
+        forbidden();
     }
 
     /**
@@ -135,8 +135,13 @@ public class SecureCAS extends Controller {
 
         // if user is authenticated, the username is in session !
         if (session.contains("username")) {
-            // We check the user's profile
+            // We check the user's profile with action annotation
             Check check = getActionAnnotation(Check.class);
+            if (check != null) {
+                check(check);
+            }
+            // We check the user's profile with class annotation
+            check = getControllerInheritedAnnotation(Check.class);
             if (check != null) {
                 check(check);
             }
