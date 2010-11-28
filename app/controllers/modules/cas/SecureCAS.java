@@ -75,7 +75,7 @@ public class SecureCAS extends Controller {
      * @throws Throwable
      */
     public static void fail() throws Throwable {
-        render();
+        forbidden();
     }
 
     /**
