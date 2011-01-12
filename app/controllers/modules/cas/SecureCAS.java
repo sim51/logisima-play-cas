@@ -28,15 +28,15 @@ import play.mvc.Controller;
  * This class is a part of the play module secure-cas. It add the ability to
  * check if the user have access to the request. If the user is note logged, it
  * redirect the user to the CAS login page and authenticate it.
- * 
+ *
  * @author bsimard
- * 
+ *
  */
 public class SecureCAS extends Controller {
 
     /**
      * Action for the login route. We simply redirect to CAS login page.
-     * 
+     *
      * @throws Throwable
      */
     public static void login() throws Throwable {
@@ -51,18 +51,21 @@ public class SecureCAS extends Controller {
     /**
      * Action for the logout route. We clear cache & session and redirect the
      * user to CAS logout page.
-     * 
+     *
      * @throws Throwable
      */
     public static void logout() throws Throwable {
+
+        String username = session.get("username");
+
         // we clear cache
-        Cache.delete("pgt_" + session.get("username"));
+        Cache.delete("pgt_" + username);
 
         // we clear session
         session.clear();
 
         // we invoke the implementation of "onDisconnected"
-        Security.invoke("onDisconnected");
+        Security.invoke("onDisconnected", username);
 
         // we redirect to the cas logout page.
         String casLogoutUrl = CASUtils.getCasLogoutUrl();
@@ -71,7 +74,7 @@ public class SecureCAS extends Controller {
 
     /**
      * Action when the user authentification or checking rights fails.
-     * 
+     *
      * @throws Throwable
      */
     public static void fail() throws Throwable {
@@ -80,7 +83,7 @@ public class SecureCAS extends Controller {
 
     /**
      * Action for the CAS return.
-     * 
+     *
      * @throws Throwable
      */
     public static void authenticate() throws Throwable {
@@ -126,7 +129,7 @@ public class SecureCAS extends Controller {
 
     /**
      * Method that do CAS Filter and check rights.
-     * 
+     *
      * @throws Throwable
      */
     @Before(unless = { "login", "logout", "fail", "authenticate", "pgtCallBack" })
@@ -160,7 +163,7 @@ public class SecureCAS extends Controller {
     /**
      * Function to check the rights of the user. See your implementation of the
      * Security class with the method check.
-     * 
+     *
      * @param check
      * @throws Throwable
      */
