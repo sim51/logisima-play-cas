@@ -134,30 +134,35 @@ public class SecureCAS extends Controller {
      */
     @Before(unless = { "login", "logout", "fail", "authenticate", "pgtCallBack" })
     public static void filter() throws Throwable {
-        Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
+      Check actionCheck = getActionAnnotation(Check.class);
+      Check controllerCheck = getControllerInheritedAnnotation(Check.class);
 
-        // if user is authenticated, the username is in session !
-        if (session.contains("username")) {
-            // We check the user's profile with action annotation
-            Check check = getActionAnnotation(Check.class);
-            if (check != null) {
-                check(check);
-            }
-            // We check the user's profile with class annotation
-            check = getControllerInheritedAnnotation(Check.class);
-            if (check != null) {
-                check(check);
-            }
-        } else {
-            Logger.debug("[SecureCAS]: user is not authenticated");
-            // we put into session the url we come from
-            flash.put("url", request.method == "GET" ? request.url : "/");
-            flash.put("params", params);
+      // We only perform the filter if some check must be done
+      if (actionCheck != null || controllerCheck != null) {
+          Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
 
-            // we redirect the user to the cas login page
-            String casLoginUrl = CASUtils.getCasLoginUrl(true);
-            redirect(casLoginUrl);
-        }
+          // if user is authenticated, the username is in session !
+          if (session.contains("username")) {
+              // We check the user's profile with action annotation
+              if (actionCheck != null) {
+                  check(actionCheck);
+              }
+              // We check the user's profile with class annotation
+              controllerCheck = getControllerInheritedAnnotation(Check.class);
+              if (controllerCheck != null) {
+                  check(controllerCheck);
+              }
+          } else {
+              Logger.debug("[SecureCAS]: user is not authenticated");
+              // we put into session the url we come from
+              flash.put("url", request.method == "GET" ? request.url : "/");
+              flash.put("params", params);
+
+              // we redirect the user to the cas login page
+              String casLoginUrl = CASUtils.getCasLoginUrl(true);
+              redirect(casLoginUrl);
+          }
+      }
     }
 
     /**
