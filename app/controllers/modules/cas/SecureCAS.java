@@ -23,6 +23,7 @@ import play.modules.cas.annotation.Check;
 import play.modules.cas.models.CASUser;
 import play.mvc.Before;
 import play.mvc.Controller;
+import play.mvc.Router;
 
 /**
  * This class is a part of the play module secure-cas. It add the ability to
@@ -40,8 +41,11 @@ public class SecureCAS extends Controller {
      * @throws Throwable
      */
     public static void login() throws Throwable {
-        // we put into session the url we come from
-        flash.put("url", request.method == "GET" ? request.url : "/");
+        // We must avoid infinite loops after success authentication
+        if (!Router.route(request).action.equals("modules.cas.SecureCAS.login")) {
+            // we put into session the url we come from
+            flash.put("url", request.method == "GET" ? request.url : "/");
+        }
 
         // we redirect the user to the cas login page
         String casLoginUrl = CASUtils.getCasLoginUrl(false);
