@@ -29,15 +29,15 @@ import play.utils.Java;
  * The Security class interface. This is the entry point where you can plug your
  * own security manager, like how to check rights, how to define your own user
  * object and put in cache (not in session !!).
- * 
+ *
  * @author bsimard
- * 
+ *
  */
 public class Security extends Controller {
 
     /**
      * Method to check user's profile.
-     * 
+     *
      * @param profile
      * @return
      */
@@ -48,7 +48,7 @@ public class Security extends Controller {
     /**
      * Method that return the user object. By default, it's only check session
      * and return the username.
-     * 
+     *
      * @return
      */
     public static Object connected() {
@@ -57,7 +57,7 @@ public class Security extends Controller {
 
     /**
      * Method that check if the user if connected.
-     * 
+     *
      * @return
      */
     public static boolean isConnected() {
@@ -75,13 +75,13 @@ public class Security extends Controller {
     /**
      * This method is called just before the logout route.
      */
-    static void onDisconnected() {
+    static void onDisconnected(String username) {
         Logger.debug("[SecureCAS]: onDisconnected method");
     }
 
     /**
      * This method is called when the user have not the good profile.
-     * 
+     *
      * @param profile
      */
     public static void onCheckFailed(String profile) {
@@ -92,7 +92,7 @@ public class Security extends Controller {
     /**
      * Method to find the good Security class. If there is class that extends
      * this one, we take it !
-     * 
+     *
      * @param m
      * @param args
      * @return

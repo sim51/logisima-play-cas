@@ -23,25 +23,29 @@ import play.modules.cas.annotation.Check;
 import play.modules.cas.models.CASUser;
 import play.mvc.Before;
 import play.mvc.Controller;
+import play.mvc.Router;
 
 /**
  * This class is a part of the play module secure-cas. It add the ability to
  * check if the user have access to the request. If the user is note logged, it
  * redirect the user to the CAS login page and authenticate it.
- * 
+ *
  * @author bsimard
- * 
+ *
  */
 public class SecureCAS extends Controller {
 
     /**
      * Action for the login route. We simply redirect to CAS login page.
-     * 
+     *
      * @throws Throwable
      */
     public static void login() throws Throwable {
-        // we put into session the url we come from
-        flash.put("url", request.method == "GET" ? request.url : "/");
+        // We must avoid infinite loops after success authentication
+        if (!Router.route(request).action.equals("modules.cas.SecureCAS.login")) {
+            // we put into session the url we come from
+            flash.put("url", request.method == "GET" ? request.url : "/");
+        }
 
         // we redirect the user to the cas login page
         String casLoginUrl = CASUtils.getCasLoginUrl(false);
@@ -51,18 +55,21 @@ public class SecureCAS extends Controller {
     /**
      * Action for the logout route. We clear cache & session and redirect the
      * user to CAS logout page.
-     * 
+     *
      * @throws Throwable
      */
     public static void logout() throws Throwable {
+
+        String username = session.get("username");
+
         // we clear cache
-        Cache.delete("pgt_" + session.get("username"));
+        Cache.delete("pgt_" + username);
 
         // we clear session
         session.clear();
 
         // we invoke the implementation of "onDisconnected"
-        Security.invoke("onDisconnected");
+        Security.invoke("onDisconnected", username);
 
         // we redirect to the cas logout page.
         String casLogoutUrl = CASUtils.getCasLogoutUrl();
@@ -71,7 +78,7 @@ public class SecureCAS extends Controller {
 
     /**
      * Action when the user authentification or checking rights fails.
-     * 
+     *
      * @throws Throwable
      */
     public static void fail() throws Throwable {
@@ -80,7 +87,7 @@ public class SecureCAS extends Controller {
 
     /**
      * Action for the CAS return.
-     * 
+     *
      * @throws Throwable
      */
     public static void authenticate() throws Throwable {
@@ -126,41 +133,46 @@ public class SecureCAS extends Controller {
 
     /**
      * Method that do CAS Filter and check rights.
-     * 
+     *
      * @throws Throwable
      */
     @Before(unless = { "login", "logout", "fail", "authenticate", "pgtCallBack" })
     public static void filter() throws Throwable {
-        Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
+      Check actionCheck = getActionAnnotation(Check.class);
+      Check controllerCheck = getControllerInheritedAnnotation(Check.class);
 
-        // if user is authenticated, the username is in session !
-        if (session.contains("username")) {
-            // We check the user's profile with action annotation
-            Check check = getActionAnnotation(Check.class);
-            if (check != null) {
-                check(check);
-            }
-            // We check the user's profile with class annotation
-            check = getControllerInheritedAnnotation(Check.class);
-            if (check != null) {
-                check(check);
-            }
-        } else {
-            Logger.debug("[SecureCAS]: user is not authenticated");
-            // we put into session the url we come from
-            flash.put("url", request.method == "GET" ? request.url : "/");
-            flash.put("params", params);
+      // We only perform the filter if some check must be done
+      if (actionCheck != null || controllerCheck != null) {
+          Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
 
-            // we redirect the user to the cas login page
-            String casLoginUrl = CASUtils.getCasLoginUrl(true);
-            redirect(casLoginUrl);
-        }
+          // if user is authenticated, the username is in session !
+          if (session.contains("username")) {
+              // We check the user's profile with action annotation
+              if (actionCheck != null) {
+                  check(actionCheck);
+              }
+              // We check the user's profile with class annotation
+              controllerCheck = getControllerInheritedAnnotation(Check.class);
+              if (controllerCheck != null) {
+                  check(controllerCheck);
+              }
+          } else {
+              Logger.debug("[SecureCAS]: user is not authenticated");
+              // we put into session the url we come from
+              flash.put("url", request.method == "GET" ? request.url : "/");
+              flash.put("params", params);
+
+              // we redirect the user to the cas login page
+              String casLoginUrl = CASUtils.getCasLoginUrl(true);
+              redirect(casLoginUrl);
+          }
+      }
     }
 
     /**
      * Function to check the rights of the user. See your implementation of the
      * Security class with the method check.
-     * 
+     *
      * @param check
      * @throws Throwable
      */

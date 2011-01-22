@@ -17,7 +17,10 @@
 package play.modules.cas;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -181,10 +184,17 @@ public class CASUtils {
      * @return
      * @throws SAXException
      */
-    private static Map<String, String> getCasAttributes(String xml) throws SAXException{
-        Map<String, String> casAttribut = null; 
+    private static Map<String, String> getCasAttributes(String xml) throws SAXException {
+        Map<String, String> casAttribut = new HashMap<String, String>();
         if (xml.indexOf("<cas:attributes>") != -1) {
-            XMLReader reader = XMLReaderFactory.createXMLReader();
+            // TODO This should be done using some cool XML parser.
+            String attributesXMLSection = xml.substring(xml.indexOf("<cas:attributes>") + "<cas:attributes>".length(),
+                    xml.indexOf("</cas:attributes>"));
+            Pattern attributePattern = Pattern.compile("<cas:(.*)>(.*)</cas:(.*)>");
+            Matcher m = attributePattern.matcher(attributesXMLSection);
+            while (m.find()) {
+                casAttribut.put(m.group(1), m.group(2));
+            }
         }
         return casAttribut;
         
