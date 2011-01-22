@@ -1,3 +1,5 @@
 /dist
 /test-result
 /logs
+/eclipse/
+/.settings/

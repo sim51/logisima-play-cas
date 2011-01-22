@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>logisima-play-cas</name>
+	<name>/home/bsimard/workspace_logisima</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -13,5 +13,7 @@
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>org.playframework.playclipse.playNature</nature>
 	</natures>
+	
 </projectDescription>
