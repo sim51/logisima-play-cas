@@ -4,7 +4,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/play.jar" sourcepath="/usr/local/play/play-1.1/framework"/>
-	<classpathentry kind="lib" path="/home/bsimard/workspace_logisima/logisima-play-cas/lib/casclient-2.1.1.jar"/>
 	<classpathentry kind="lib" path="/home/bsimard/workspace_logisima/logisima-play-cas/lib/logisima-play-cas.jar"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/commons-logging-1.1.1.jar"/>
 	<classpathentry kind="lib" path="/usr/local/play/play-1.1/framework/lib/commons-email-1.2.jar"/>
