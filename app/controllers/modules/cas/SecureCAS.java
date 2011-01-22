@@ -112,7 +112,8 @@ public class SecureCAS extends Controller {
             }
             Logger.debug("[SecureCAS]: redirect to url -> " + url);
             redirect(url);
-        } else {
+        }
+        else {
             fail();
         }
     }
@@ -138,34 +139,30 @@ public class SecureCAS extends Controller {
      */
     @Before(unless = { "login", "logout", "fail", "authenticate", "pgtCallBack" })
     public static void filter() throws Throwable {
-        Check actionCheck = getActionAnnotation(Check.class);
-        Check controllerCheck = getControllerInheritedAnnotation(Check.class);
+        Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
 
-        // We only perform the filter if some check must be done
-        if (actionCheck != null || controllerCheck != null) {
-            Logger.debug("[SecureCAS]: CAS Filter for URL -> " + request.url);
-
-            // if user is authenticated, the username is in session !
-            if (session.contains("username")) {
-                // We check the user's profile with action annotation
-                if (actionCheck != null) {
-                    check(actionCheck);
-                }
-                // We check the user's profile with class annotation
-                controllerCheck = getControllerInheritedAnnotation(Check.class);
-                if (controllerCheck != null) {
-                    check(controllerCheck);
-                }
-            } else {
-                Logger.debug("[SecureCAS]: user is not authenticated");
-                // we put into session the url we come from
-                flash.put("url", request.method == "GET" ? request.url : "/");
-                flash.put("params", params);
-
-                // we redirect the user to the cas login page
-                String casLoginUrl = CASUtils.getCasLoginUrl(true);
-                redirect(casLoginUrl);
+        // if user is authenticated, the username is in session !
+        if (session.contains("username")) {
+            // We check the user's profile with class annotation
+            Check controllerCheck = getControllerInheritedAnnotation(Check.class);
+            if (controllerCheck != null) {
+                check(controllerCheck);
             }
+            // We check the user's profile with action annotation
+            Check actionCheck = getActionAnnotation(Check.class);
+            if (actionCheck != null) {
+                check(actionCheck);
+            }
+        }
+        else {
+            Logger.debug("[SecureCAS]: user is not authenticated");
+            // we put into session the url we come from
+            flash.put("url", request.method == "GET" ? request.url : "/");
+            flash.put("params", params);
+
+            // we redirect the user to the cas login page
+            String casLoginUrl = CASUtils.getCasLoginUrl(true);
+            redirect(casLoginUrl);
         }
     }
 

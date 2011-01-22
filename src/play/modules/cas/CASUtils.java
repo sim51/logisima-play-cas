@@ -30,12 +30,11 @@ import org.xml.sax.SAXException;
 
 import play.Logger;
 import play.Play;
+import play.Play.Mode;
 import play.cache.Cache;
+import play.libs.WS;
 import play.modules.cas.models.CASUser;
 import play.mvc.Router;
-
-import com.ning.http.client.AsyncHttpClient;
-import com.sun.org.apache.xerces.internal.parsers.DOMParser;
 
 /**
  * Utils class for CAS.
@@ -54,7 +53,15 @@ public class CASUtils {
      * @throws Throwable
      */
     public static String getCasLoginUrl(Boolean possibleGateway) {
-        String casLoginUrl = Play.configuration.getProperty("cas.loginUrl");
+
+        String casLoginUrl;
+
+        if (isCasMockServer()) {
+            casLoginUrl = Router.getFullUrl("modules.cas.MockServer.login");
+        }
+        else {
+            casLoginUrl = Play.configuration.getProperty("cas.loginUrl");
+        }
 
         // we add the service URL (the reverse route for SecureCas.
         casLoginUrl += "?service=" + getCasServiceUrl();
@@ -74,7 +81,12 @@ public class CASUtils {
      * @throws Throwable
      */
     public static String getCasLogoutUrl() {
-        return Play.configuration.getProperty("cas.logoutUrl");
+        if (isCasMockServer()) {
+            return Router.getFullUrl("modules.cas.MockServer.logout");
+        }
+        else {
+            return Play.configuration.getProperty("cas.logoutUrl");
+        }
     }
 
     /**
@@ -89,19 +101,41 @@ public class CASUtils {
     }
 
     /**
+     * Method that return service validation url.
+     * 
+     * @throws Throwable
+     */
+    private static String getCasServiceValidateUrl() {
+        String casServiceValidateUrl;
+        if (isCasMockServer()) {
+            casServiceValidateUrl = Router.getFullUrl("modules.cas.MockServer.serviceValidate");
+        }
+        else {
+            casServiceValidateUrl = Play.configuration.getProperty("cas.validateUrl");
+        }
+        return casServiceValidateUrl;
+    }
+
+    /**
      * Method that return proxy call back url.
      * 
      * @throws Throwable
      */
     private static String getCasProxyCallBackUrl() {
         String casProxyCallBackUrl = "";
-        // proxy call back url must be in https
-        if (Play.configuration.getProperty("application.url.ssl") != null
-                && !Play.configuration.getProperty("application.url.ssl").equals("")) {
-            casProxyCallBackUrl = Play.configuration.getProperty("application.url.ssl");
-        } else {
+        // proxy call back url must be in https, but not in Mock mode
+        if (isCasMockServer()) {
             casProxyCallBackUrl = Play.configuration.getProperty("application.url");
-            casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
+        }
+        else {
+            if (Play.configuration.getProperty("application.url.ssl") != null
+                    && !Play.configuration.getProperty("application.url.ssl").equals("")) {
+                casProxyCallBackUrl = Play.configuration.getProperty("application.url.ssl");
+            }
+            else {
+                casProxyCallBackUrl = Play.configuration.getProperty("application.url");
+                casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
+            }
         }
         casProxyCallBackUrl += Router.reverse("modules.cas.SecureCAS.pgtCallBack").url;
         return casProxyCallBackUrl;
@@ -113,7 +147,13 @@ public class CASUtils {
      * @return
      */
     private static String getCasProxyUrl() {
-        String casProxyUrl = Play.configuration.getProperty("cas.proxyUrl");
+        String casProxyUrl;
+        if (isCasMockServer()) {
+            casProxyUrl = Router.getFullUrl("modules.cas.MockServer.proxy");
+        }
+        else {
+            casProxyUrl = Play.configuration.getProperty("cas.proxyUrl");
+        }
         return casProxyUrl;
     }
 
@@ -132,6 +172,19 @@ public class CASUtils {
     }
 
     /**
+     * Method to know if CAS Mock server is enabled (by testing conf).
+     * 
+     * @return
+     */
+    public static Boolean isCasMockServer() {
+        Boolean isCasMockServer = Boolean.FALSE;
+        if (Play.configuration.getProperty("cas.mockserver").equals("true") && Play.mode == Mode.DEV) {
+            isCasMockServer = Boolean.TRUE;
+        }
+        return isCasMockServer;
+    }
+
+    /**
      * Method that verify if the cas ticket is valid.
      * 
      * @param ticket
@@ -146,11 +199,8 @@ public class CASUtils {
     public static CASUser valideCasTicket(String ticket) throws IOException, SAXException,
             ParserConfigurationException, InterruptedException, ExecutionException {
 
-        // we create a http client
-        AsyncHttpClient client = new AsyncHttpClient();
-
         // contruction of the cas validation URL for service ticket
-        String casValidationTicketUrl = Play.configuration.getProperty("cas.validateUrl");
+        String casValidationTicketUrl = getCasServiceValidateUrl();
         // required parameter
         casValidationTicketUrl += "?service=" + getCasServiceUrl();
         casValidationTicketUrl += "&ticket=" + ticket;
@@ -160,28 +210,27 @@ public class CASUtils {
         }
 
         // we do the validation request
-        com.ning.http.client.Response validationResponse = client.prepareGet(casValidationTicketUrl).execute().get();
+        Logger.debug("[SecureCAS]: validate cas ticket by calling " + casValidationTicketUrl);
+        // com.ning.http.client.Response validationResponse =
+        // client.prepareGet(casValidationTicketUrl).execute().get();
+        Document response = WS.url(casValidationTicketUrl).get().getXml();
 
         /** Parsing validation response **/
-        // creation of xml parser
-        DOMParser parser = new DOMParser();
-        parser.parse(validationResponse.getResponseBody());
-        Document doc = parser.getDocument();
         // search node "cas:authenticationSuccess"
-        NodeList list = doc.getElementsByTagName("authenticationSuccess");
+        NodeList list = response.getElementsByTagName("cas:authenticationSuccess");
 
         CASUser user = null;
         if (list.getLength() > 0) {
             Map<String, String> casAttribut = null;
-            casAttribut = getCasAttributes(validationResponse.getResponseBody());
+            casAttribut = getCasAttributes(response);
             // we populate the CASUser
             user = new CASUser();
-            user.setUsername(doc.getElementsByTagName("user").item(0).getNodeValue());
+            user.setUsername(response.getElementsByTagName("cas:user").item(0).getTextContent());
             user.setAttribut(casAttribut);
 
             if (isProxyCas()) {
                 // here we get PGT from cache
-                String PGTIOU = doc.getElementsByTagName("proxyGrantingTicket").item(0).getNodeValue();
+                String PGTIOU = response.getElementsByTagName("cas:proxyGrantingTicket").item(0).getTextContent();
                 String pgt = (String) Cache.get(PGTIOU);
                 Cache.delete(PGTIOU);
 
@@ -201,22 +250,17 @@ public class CASUtils {
      * @throws SAXException
      * @throws IOException
      */
-    private static Map<String, String> getCasAttributes(String xml) throws IOException, SAXException {
+    private static Map<String, String> getCasAttributes(Document document) throws IOException, SAXException {
         Map<String, String> casAttribut = new HashMap<String, String>();
 
-        // creation of xml parser
-        DOMParser parser = new DOMParser();
-        parser.parse(xml);
-        Document doc = parser.getDocument();
-
         // search node "cas:attribute"
-        NodeList list = doc.getElementsByTagName("attributes");
+        NodeList list = document.getElementsByTagName("cas:attributes");
 
         if (list.getLength() > 0) {
             Node nodeAttribute = list.item(0);
             for (int i = 0; i < nodeAttribute.getChildNodes().getLength(); i++) {
                 Node attribute = nodeAttribute.getChildNodes().item(i);
-                casAttribut.put(attribute.getNodeName(), attribute.getNodeValue());
+                casAttribut.put(attribute.getNodeName(), attribute.getTextContent());
             }
         }
         return casAttribut;
@@ -238,30 +282,23 @@ public class CASUtils {
             InterruptedException, ExecutionException {
         String proxyTicket = null;
 
-        // we create a http client
-        AsyncHttpClient client = new AsyncHttpClient();
-
         // construction of the proxy validation URL
         String pgt = (String) Cache.get("pgt_" + username);
         String url = getCasProxyUrl() + "?pgt=" + pgt + "&targetService=" + serviceName;
 
         // we do the validation request
-        com.ning.http.client.Response validationResponse = client.prepareGet(url).execute().get();
+        Document response = WS.url(url).get().getXml();
 
-        /** Parsing validation response **/
-        // creation of xml parser
-        DOMParser parser = new DOMParser();
-        parser.parse(validationResponse.getResponseBody());
-        Document doc = parser.getDocument();
         // search node "cas:authenticationSuccess"
-        NodeList list = doc.getElementsByTagName("proxySuccess");
+        NodeList list = response.getElementsByTagName("cas:proxySuccess");
 
         // parse this response (use a lightweight approach for now)
         if (list.getLength() > 0) {
-            proxyTicket = doc.getElementsByTagName("proxyTicket").item(0).getNodeValue();
-        } else {
+            proxyTicket = response.getElementsByTagName("cas:proxyTicket").item(0).getTextContent();
+        }
+        else {
             Logger.error("CAS server responded with error for request [" + url + "].  Full response was ["
-                    + doc.getElementsByTagName("proxyFailure").item(0).getNodeValue() + "]");
+                    + response.getElementsByTagName("cas:proxyFailure").item(0).getTextContent() + "]");
         }
         Logger.debug("[SecureCAS]: PT for user " + username + " and service " + serviceName + " is " + proxyTicket);
         return proxyTicket;

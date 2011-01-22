@@ -16,32 +16,38 @@
  */
 package play.modules.cas.models;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * CAS user object.
  * 
  * @author bsimard
- *
+ * 
  */
-public class CASUser {
-    
-    private String username;
+public class CASUser implements Serializable {
+
+    /**
+     * 
+     */
+    private static final long   serialVersionUID = -7063462255687685373L;
+    private String              username;
     private Map<String, String> attribut;
-    
+
     public String getUsername() {
         return username;
     }
+
     public void setUsername(String username) {
         this.username = username;
     }
+
     public Map<String, String> getAttribut() {
         return attribut;
     }
+
     public void setAttribut(Map<String, String> attribut) {
         this.attribut = attribut;
     }
-    
-    
 
 }

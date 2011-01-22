@@ -16,8 +16,7 @@
  */
 package play.modules.cas;
 
-import play.Play;
-import play.Play.Mode;
+import play.Logger;
 import play.PlayPlugin;
 import play.mvc.Router;
 
@@ -30,13 +29,18 @@ import play.mvc.Router;
 public class CASPlugin extends PlayPlugin {
 
     @Override
+    public void onApplicationStart() {
+        Logger.info("Module CAS conf : [Mock Server:" + CASUtils.isCasMockServer() + "]");
+    }
+
+    @Override
     public void onRoutesLoaded() {
-        if (Play.mode == Mode.DEV) {
-            Router.addRoute("GET", "/@/cas/login", "modules.cas.MockServer.login");
-            Router.addRoute("GET", "/@cas/authenticate", "modules.cas.MockServer.loginAction");
-            Router.addRoute("GET", "/@cas/logout    ", "modules.cas.MockServer.logout");
+        if (CASUtils.isCasMockServer()) {
+            Logger.debug("adding routes for CAS Mock Server");
+            Router.addRoute("GET", "/@cas/login", "modules.cas.MockServer.login");
+            Router.addRoute("POST", "/@cas/authenticate", "modules.cas.MockServer.loginAction");
+            Router.addRoute("GET", "/@cas/logout", "modules.cas.MockServer.logout");
             Router.addRoute("GET", "/@cas/serviceValidate", "modules.cas.MockServer.serviceValidate");
-            Router.addRoute("GET", "/@cas/proxyValidate", "modules.cas.MockServer.proxyValidate");
             Router.addRoute("GET", "/@cas/proxy", "modules.cas.MockServer.proxy");
         }
     }

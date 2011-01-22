@@ -41,7 +41,7 @@ public class Security extends Controller {
      * @param profile
      * @return
      */
-    public static boolean check(String profile) {
+    static boolean check(String profile) {
         return true;
     }
 
@@ -51,7 +51,7 @@ public class Security extends Controller {
      * 
      * @return
      */
-    public static Object connected() {
+    static Object connected() {
         return session.get("username");
     }
 
@@ -60,7 +60,7 @@ public class Security extends Controller {
      * 
      * @return
      */
-    public static boolean isConnected() {
+    static boolean isConnected() {
         return session.contains("username");
     }
 
@@ -83,7 +83,7 @@ public class Security extends Controller {
      * 
      * @param profile
      */
-    public static void onCheckFailed(String profile) {
+    static void onCheckFailed(String profile) {
         Logger.debug("[SecureCAS]: profile " + profile + " check failed");
         forbidden();
     }
@@ -103,7 +103,8 @@ public class Security extends Controller {
         List<Class> classes = Play.classloader.getAssignableClasses(Security.class);
         if (classes.size() == 0) {
             security = Security.class;
-        } else {
+        }
+        else {
             security = classes.get(0);
         }
         try {

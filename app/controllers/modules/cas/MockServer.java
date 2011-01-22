@@ -16,33 +16,43 @@
  */
 package controllers.modules.cas;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+
+import play.Logger;
+import play.cache.Cache;
+import play.libs.Codec;
+import play.libs.WS;
 import play.mvc.Controller;
 
 public class MockServer extends Controller {
 
-    private final static String ST                = "ST-1856339-aA5Yuvrxzpv8Tau1cYQ7";
-    private final static String PT                = "PT-1856376-1HMgO86Z2ZKeByc5XdYD";
-    private final static String PGT               = "PGT-490649-W81Y9Sa2vTM7hda7xNTkezTbVge4CUsybAr";
-    private final static String PGTIOU            = "PGTIOU-84678-8a9d";
-    private final static String serviceValidateOK = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationSuccess><cas:user>$$username$$</cas:user><cas:proxyGrantingTicket>$$PGTIOU$$</cas:proxyGrantingTicket></cas:authenticationSuccess></cas:serviceResponse>";
-    private final static String serviceValidateKO = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationFailure code=\"INVALID_TICKET\">Ticket ST-1856339-aA5Yuvrxzpv8Tau1cYQ7 not recognized</cas:authenticationFailure></cas:serviceResponse>";
-    private final static String proxyValidateOK   = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationSuccess><cas:user>username</cas:user><cas:proxyGrantingTicket>PGTIOU-84678-8a9d...</cas:proxyGrantingTicket><cas:proxies><cas:proxy>https://proxy2/pgtUrl</cas:proxy></cas:proxies></cas:authenticationSuccess></cas:serviceResponse>";
-    private final static String proxyValidateKO   = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationFailure code=\"INVALID_TICKET\">ticket PT-1856376-1HMgO86Z2ZKeByc5XdYD not recognized</cas:authenticationFailure></cas:serviceResponse>";
-    private final static String proxyOK           = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:proxySuccess><cas:proxyTicket>PT-1856392-b98xZrQN4p90ASrw96c8</cas:proxyTicket></cas:proxySuccess></cas:serviceResponse>";
+    private final static String serviceValidateOK = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationSuccess><cas:user>_LOGIN_</cas:user><cas:proxyGrantingTicket>_PGTIOU_</cas:proxyGrantingTicket></cas:authenticationSuccess></cas:serviceResponse>";
+    private final static String serviceValidateKO = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:authenticationFailure code=\"INVALID_TICKET\">_TICKET_ not recognized</cas:authenticationFailure></cas:serviceResponse>";
+    private final static String proxyOK           = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:proxySuccess><cas:proxyTicket>_PT_</cas:proxyTicket></cas:proxySuccess></cas:serviceResponse>";
     private final static String proxyKO           = "<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'><cas:proxyFailure code=\"INVALID_REQUEST\">'pgt' and 'targetService' parameters are both required</cas:proxyFailure></cas:serviceResponse>";
 
     public static void login() {
-        String serviceUrl = params.get("serviceUrl");
+        Logger.debug("[MockCAS]: login page");
+        String serviceUrl = request.params.get("service");
+        Logger.debug("[MockCAS]: Service URL is ", serviceUrl);
         render(serviceUrl);
     }
 
     public static void loginAction() {
+        Logger.debug("[MockCAS]: validate credential");
         String login = params.get("login");
         String password = params.get("password");
         String serviceUrl = params.get("serviceUrl");
-
+        String ST = "ST-" + Codec.UUID();
+        Cache.set(ST, login, "1h");
         if (login.equals(password)) {
-            redirect(serviceUrl + "&ticket=" + ST);
+            Logger.debug("[MockCAS]: redirect to " + serviceUrl + "?ticket=" + ST);
+            redirect(serviceUrl + "?ticket=" + ST);
+        }
+        else {
+            flash.keep();
+            login();
         }
     }
 
@@ -50,15 +60,35 @@ public class MockServer extends Controller {
         render();
     }
 
-    public static void serviceValidate() {
-        renderXml(serviceValidateOK);
+    public static void serviceValidate() throws InterruptedException, ExecutionException, IOException {
+        String ST = params.get("ticket");
+        Logger.debug("[MockCAS]: service validate for ticket " + ST);
+        String login = (String) Cache.get(ST);
+        if (login != null && !login.equals("")) {
+            String PGTIOU = "PGT-IOU" + Codec.UUID();
+            String PGT = "PGT-" + Codec.UUID();
+            Cache.set(PGT, login, "1h");
+            if (params.get("pgtUrl") != null && !params.get("pgtUrl").isEmpty()) {
+                String pgtUrl = params.get("pgtUrl");
+                // we create a http client
+                Logger.debug("[MockCAS]: send PGT via  " + pgtUrl + "?pgtIou=" + PGTIOU + "&pgtId=" + PGT);
+                WS.url(pgtUrl + "?pgtIou=" + PGTIOU + "&pgtId=" + PGT).get();
+            }
+            Logger.debug("[MockCAS]: ticket " + ST + " is valid");
+            renderXml(serviceValidateOK.replaceFirst("_LOGIN_", login).replaceFirst("_PGTIOU_", PGTIOU));
+        }
+        else {
+            Logger.debug("[MockCAS]: ticket " + ST + " is not valid");
+            renderXml(serviceValidateKO.replaceFirst("_TICKET_", ST));
+        }
     }
 
     public static void proxy() {
-        renderXml(proxyOK);
+        String PGT = params.get("pgt");
+        String PT = "PT-" + Codec.UUID();
+        String login = (String) Cache.get(PGT);
+        Cache.set(PT, login, "1h");
+        renderXml(proxyOK.replaceFirst("_PT_", PT));
     }
 
-    public static void proxyValidate() {
-        renderXml(proxyValidateOK);
-    }
 }
