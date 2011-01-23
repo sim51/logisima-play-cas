@@ -51,7 +51,7 @@ public class Security extends Controller {
      * 
      * @return
      */
-    static Object connected() {
+    public static Object connected() {
         return session.get("username");
     }
 
@@ -60,7 +60,7 @@ public class Security extends Controller {
      * 
      * @return
      */
-    static boolean isConnected() {
+    public static boolean isConnected() {
         return session.contains("username");
     }
 

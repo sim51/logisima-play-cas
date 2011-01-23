@@ -178,7 +178,8 @@ public class CASUtils {
      */
     public static Boolean isCasMockServer() {
         Boolean isCasMockServer = Boolean.FALSE;
-        if (Play.configuration.getProperty("cas.mockserver").equals("true") && Play.mode == Mode.DEV) {
+        if (Play.configuration.getProperty("cas.mockserver") != null
+                && Play.configuration.getProperty("cas.mockserver").equals("true") && Play.mode == Mode.DEV) {
             isCasMockServer = Boolean.TRUE;
         }
         return isCasMockServer;
