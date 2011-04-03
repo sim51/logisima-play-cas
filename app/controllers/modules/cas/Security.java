@@ -22,7 +22,8 @@ import java.util.List;
 import play.Logger;
 import play.Play;
 import play.modules.cas.models.CASUser;
-import play.mvc.Controller;
+import play.mvc.Scope;
+import play.mvc.results.Forbidden;
 import play.utils.Java;
 
 /**
@@ -33,7 +34,7 @@ import play.utils.Java;
  * @author bsimard
  * 
  */
-public class Security extends Controller {
+public class Security {
 
     /**
      * Method to check user's profile.
@@ -41,7 +42,7 @@ public class Security extends Controller {
      * @param profile
      * @return
      */
-    static boolean check(String profile) {
+    public static boolean check(String profile) {
         return true;
     }
 
@@ -52,7 +53,7 @@ public class Security extends Controller {
      * @return
      */
     public static Object connected() {
-        return session.get("username");
+        return Scope.Session.current().get("username");
     }
 
     /**
@@ -61,7 +62,7 @@ public class Security extends Controller {
      * @return
      */
     public static boolean isConnected() {
-        return session.contains("username");
+        return Scope.Session.current().contains("username");
     }
 
     /**
@@ -85,7 +86,7 @@ public class Security extends Controller {
      */
     static void onCheckFailed(String profile) {
         Logger.debug("[SecureCAS]: profile " + profile + " check failed");
-        forbidden();
+        throw new Forbidden("Access denied");
     }
 
     /**

@@ -44,7 +44,7 @@ public class SecureCAS extends Controller {
         // We must avoid infinite loops after success authentication
         if (!Router.route(request).action.equals("modules.cas.SecureCAS.login")) {
             // we put into session the url we come from
-            flash.put("url", request.method == "GET" ? request.url : "/");
+            Cache.add("url_" + session.getId(), request.method == "GET" ? request.url : "/", "10min");
         }
 
         // we redirect the user to the cas login page
@@ -106,7 +106,7 @@ public class SecureCAS extends Controller {
 
         if (isAuthenticated) {
             // we redirect to the original URL
-            String url = flash.get("url");
+            String url = (String) Cache.get("url_" + session.getId());
             if (url == null) {
                 url = "/";
             }
