@@ -3,29 +3,29 @@ package controllers;
 import play.Logger;
 import play.cache.Cache;
 import play.modules.cas.models.CASUser;
+import play.mvc.Scope;
 import controllers.modules.cas.Security;
 
 public class MySecurity extends Security {
 
-    static boolean check(String profile) {
+    public static boolean check(String profile) {
         Logger.debug("[MySecurity]: check :" + profile);
         return profile.equals("role1");
     }
 
-    static void onAuthenticated(CASUser user) {
+    public static void onAuthenticated(CASUser user) {
         Logger.debug("[MySecurity]: onAutenticated method");
-        Cache.set(session.get("username"), user);
+        Cache.set(Scope.Session.current().get("username"), user);
     }
 
-    static void onDisconnected() {
+    public static void onDisconnected() {
         Logger.debug("[MySecurity]: onAutenticated method");
-        Cache.delete(session.get("username"));
-        session.clear();
+        Cache.delete(Scope.Session.current().get("username"));
+        Scope.Session.current().clear();
     }
 
     public static Object connected() {
         Logger.debug("[MySecurity]: onAutenticated method");
-        return Cache.get(session.get("username"));
+        return Cache.get(Scope.Session.current().get("username"));
     }
-
 }

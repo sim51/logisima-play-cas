@@ -9,6 +9,9 @@
     </head>
     <body>
 		<div id="page">
+			#{if flash.error}
+				<p style="color:red;">${flash.error}</p>
+			#{/if}
 			<form action="@@{modules.cas.MockServer.loginAction()}" method="post">
 				<label for="login">
 					<strong>Login</strong>
