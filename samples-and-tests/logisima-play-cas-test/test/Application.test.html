@@ -1,0 +1,14 @@
+#{selenium 'index'}
+    open('/')
+    assertTitle('Welcome')
+#{/selenium}
+
+#{selenium 'login'}
+    open('/login')
+    waitForPageToLoad(100)
+    assertTitle('CAS Mock Server - Login')
+    type('login', 'admin')
+    type('password', 'admin')
+    clickAndWait('//input[@value='Login']')
+    assertTextPresent('Welcome admin')
+#{/selenium}

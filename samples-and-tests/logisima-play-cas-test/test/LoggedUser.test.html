@@ -1,0 +1,42 @@
+#{selenium 'login'}
+    open('/login')
+    waitForPageToLoad(100)
+    assertTitle('CAS Mock Server - Login')
+    type('login', 'admin')
+    type('password', 'admin')
+    clickAndWait('//input[@value='Login']')
+    assertTextPresent('Welcome admin')
+#{/selenium}
+
+
+
+#{selenium 'private page role1'}
+	open('/private/checkrightok')
+	assertTitle('Private Page (with role1)')
+#{/selenium}
+
+#{selenium 'private page role2'}
+	open('/private/checkrightko')
+	assertTextPresent('Access denied')
+#{/selenium}
+
+#{selenium 'restricted controller role 1'}
+	open('/restrictedroleok/index')
+	assertTitle('Restricted Controller (to role 1)')
+#{/selenium}
+
+#{selenium 'restricted controller role 2'}
+	open('/restrictedroleko/index')
+	assertTextPresent('Access denied')
+#{/selenium}
+
+#{selenium 'proxy ticket'}
+	open('/private/proxyticket')
+	assertTextPresent('Proxy ticket for "logisima" is PT-')
+#{/selenium}
+
+#{selenium 'logout'}
+	open('/logout')
+	assertTextPresent('Logout done !')
+#{/selenium}
+

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>#{get 'title' /}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}">
+        <link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}">
+        <script src="@{'/public/javascripts/jquery-1.4.2.min.js'}" type="text/javascript" charset="utf-8"></script>
+    </head>
+    <body>
+        <div id="content">
+       		#{doLayout /}
+       		<ul>
+				<li><a href="@{Application.index()}">Home</a></li>
+				<li><a href="@{Private.checkAuthentication()}">Private Page (with no role)</a></li>
+				<li><a href="@{Private.checkRightOk()}">Private Page (with role: role1)</a></li>
+				<li><a href="@{Private.checkRightKo()}">Private Page (with role: role2)</a></li>
+				<li><a href="@{RestrictedRoleOk.index()}">Restricted Controller (with role1)</a></li>
+				<li><a href="@{RestrictedRoleKo.index()}">Restricted Controller (with role2)</a></li>
+				<li><a href="@{Private.proxyTicket()}">Proxy Ticket</a></li>
+				<li><a href="@{modules.cas.SecureCAS.logout()}">Logout</a></li>
+			</ul>
+       	</div>
+    </body>
+</html>
