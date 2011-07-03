@@ -26,9 +26,8 @@ import play.mvc.Controller;
 import play.mvc.Router;
 
 /**
- * This class is a part of the play module secure-cas. It add the ability to
- * check if the user have access to the request. If the user is note logged, it
- * redirect the user to the CAS login page and authenticate it.
+ * This class is a part of the play module secure-cas. It add the ability to check if the user have access to the
+ * request. If the user is note logged, it redirect the user to the CAS login page and authenticate it.
  * 
  * @author bsimard
  * 
@@ -43,7 +42,7 @@ public class SecureCAS extends Controller {
     public static void login() throws Throwable {
         // We must avoid infinite loops after success authentication
         if (!Router.route(request).action.equals("modules.cas.SecureCAS.login")) {
-            // we put into session the url we come from
+            // we put into cache the url we come from
             Cache.add("url_" + session.getId(), request.method == "GET" ? request.url : "/", "10min");
         }
 
@@ -53,8 +52,7 @@ public class SecureCAS extends Controller {
     }
 
     /**
-     * Action for the logout route. We clear cache & session and redirect the
-     * user to CAS logout page.
+     * Action for the logout route. We clear cache & session and redirect the user to CAS logout page.
      * 
      * @throws Throwable
      */
@@ -156,9 +154,8 @@ public class SecureCAS extends Controller {
         }
         else {
             Logger.debug("[SecureCAS]: user is not authenticated");
-            // we put into session the url we come from
-            flash.put("url", request.method == "GET" ? request.url : "/");
-            flash.put("params", params);
+            // we put into cache the url we come from
+            Cache.add("url_" + session.getId(), request.method == "GET" ? request.url : "/", "10min");
 
             // we redirect the user to the cas login page
             String casLoginUrl = CASUtils.getCasLoginUrl(true);
@@ -167,8 +164,7 @@ public class SecureCAS extends Controller {
     }
 
     /**
-     * Function to check the rights of the user. See your implementation of the
-     * Security class with the method check.
+     * Function to check the rights of the user. See your implementation of the Security class with the method check.
      * 
      * @param check
      * @throws Throwable

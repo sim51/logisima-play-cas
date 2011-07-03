@@ -52,6 +52,7 @@ public class MockServer extends Controller {
         }
         else {
             flash.keep();
+            flash.error("FAIL : login and password are not the same !");
             login();
         }
     }

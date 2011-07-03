@@ -95,8 +95,7 @@ public class CASUtils {
      * @throws Throwable
      */
     private static String getCasServiceUrl() {
-        String casServiceUrl = Play.configuration.getProperty("application.url");
-        casServiceUrl += Router.reverse("modules.cas.SecureCAS.authenticate").url;
+        String casServiceUrl = Router.getFullUrl("modules.cas.SecureCAS.authenticate");
         return casServiceUrl;
     }
 
@@ -122,22 +121,21 @@ public class CASUtils {
      * @throws Throwable
      */
     private static String getCasProxyCallBackUrl() {
-        String casProxyCallBackUrl = "";
+        String casProxyCallBackUrl = Router.getFullUrl("modules.cas.SecureCAS.pgtCallBack");
+
         // proxy call back url must be in https, but not in Mock mode
-        if (isCasMockServer()) {
-            casProxyCallBackUrl = Play.configuration.getProperty("application.url");
-        }
-        else {
-            if (Play.configuration.getProperty("application.url.ssl") != null
-                    && !Play.configuration.getProperty("application.url.ssl").equals("")) {
-                casProxyCallBackUrl = Play.configuration.getProperty("application.url.ssl");
+        if (!casProxyCallBackUrl.contains("https") && !isCasMockServer()) {
+
+            // we look if there is a property 'application.baseUrl.ssl'
+            if (Play.configuration.getProperty("application.baseUrl.ssl") != null
+                    && !Play.configuration.getProperty("application.baseUrl.ssl").equals("")) {
+                casProxyCallBackUrl = Play.configuration.getProperty("application.baseUrl.ssl");
             }
             else {
-                casProxyCallBackUrl = Play.configuration.getProperty("application.url");
                 casProxyCallBackUrl = casProxyCallBackUrl.replaceFirst("http://", "https://");
             }
         }
-        casProxyCallBackUrl += Router.reverse("modules.cas.SecureCAS.pgtCallBack").url;
+
         return casProxyCallBackUrl;
     }
 
@@ -188,8 +186,7 @@ public class CASUtils {
     /**
      * Method that verify if the cas ticket is valid.
      * 
-     * @param ticket
-     *            cas tickets
+     * @param ticket cas tickets
      * @throws ParserConfigurationException
      * @throws SAXException
      * @throws IOException

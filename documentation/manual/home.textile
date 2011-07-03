@@ -11,7 +11,7 @@
 <pre>
 	<code>
     # The logisima play cas module
-    module.cas=${play.path}/modules/cas-3.0
+    module.cas=${play.path}/modules/cas-3.1
     </code>
 </pre>
 <h3><a>For play &lt; 1.2</a></h3>
@@ -21,7 +21,7 @@
 <pre>
 	<code>
         require:    
-    	&nbsp;&nbsp;- play -> cas 3.0
+    	&nbsp;&nbsp;- play -> cas 3.1
     </code>
 </pre>
 
@@ -46,7 +46,7 @@
 	cas.validateUrl=https://www.logisima.com/cas/serviceValidate
 	cas.loginUrl=https://www.logisima.com/cas/loginUrl
 	cas.logoutUrl=https://www.logisima.com/cas/logoutUrl
-	application.url=http://localhost:9000
+	application.baseUrl=http://localhost:9000
 	cas.gateway=false
 	</code>
 </pre>
@@ -58,10 +58,10 @@
 <pre>
 	<code>
 		cas.proxyUrl=https://www.logisima.com/cas/proxy
-		application.url.ssl=https://localhost:8943
+		application.baseUrl.ssl=https://localhost:8943
 	</code>
 </pre>
-<p>NB: "application.url.ssl" is useful to specify the SSL url of your application. By default, module generate the url with "application.url" property, and replace http by https</p>
+<p>NB: "application.baseUrl.ssl" is useful to specify the SSL url of your application. By default, module generate the url with "application.baseUrl" property, and replace http by https</p>
 
 <h3><a>Configuration Mock CAS server</a></h3>
 <p>

@@ -1,14 +1,16 @@
 #{selenium 'index'}
+	deleteAllVisibleCookies()
     open('/')
     assertTitle('Welcome')
 #{/selenium}
 
 #{selenium 'login'}
     open('/login')
-    waitForPageToLoad(100)
+    waitForPageToLoad(1000)
     assertTitle('CAS Mock Server - Login')
     type('login', 'admin')
     type('password', 'admin')
     clickAndWait('//input[@value='Login']')
+    waitForPageToLoad(100)
     assertTextPresent('Welcome admin')
 #{/selenium}
