@@ -105,6 +105,7 @@ public class SecureCAS extends Controller {
         if (isAuthenticated) {
             // we redirect to the original URL
             String url = (String) Cache.get("url_" + session.getId());
+            Cache.delete("url_" + session.getId());
             if (url == null) {
                 url = "/";
             }
