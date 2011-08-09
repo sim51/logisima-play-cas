@@ -19,6 +19,10 @@ package controllers.modules.cas;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import controllers.modules.cas.annotation.SecurityClass;
+import controllers.modules.cas.exceptions.MultipleSecurityClassesFoundException;
+import controllers.modules.cas.exceptions.SecurityClassNotFoundException;
+
 import play.Logger;
 import play.Play;
 import play.modules.cas.models.CASUser;
@@ -97,11 +101,14 @@ public class Security {
     public static Object invoke(String m, Object... args) throws Throwable {
         Logger.info(m);
         Class security = null;
-        List<Class> classes = Play.classloader.getAssignableClasses(Security.class);
-        if (classes.size() == 0) {
-            security = Security.class;
+        List<Class> classes = Play.classloader.getAnnotatedClasses(SecurityClass.class);
+        if (classes.isEmpty()) {
+        	throw new SecurityClassNotFoundException(); 
         }
-        else {
+        if (classes.size() > 1) {
+        	throw new MultipleSecurityClassesFoundException();
+        }
+        if (classes.size() == 1) {
             security = classes.get(0);
         }
         try {
