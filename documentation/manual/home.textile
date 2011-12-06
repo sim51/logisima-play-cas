@@ -4,7 +4,7 @@
 </p>
 
 <h2><a>Enable LogiSima Play CAS</a></h2>
-<h3><a>For play &lt; 1.2</a></h3>
+<h3><a>For play < 1.2</a></h3>
 <p>
 	In the conf/application.conf file, enable the LogiSima Play CAS module with this line :
 </p>
@@ -14,7 +14,7 @@
     module.cas=${play.path}/modules/cas-3.1
     </code>
 </pre>
-<h3><a>For play &lt; 1.2</a></h3>
+<h3><a>For play >= 1.2</a></h3>
 <p>
 	In the conf/dependencies.yml file, enable the LogiSima Play CAS module depency with this adding this line :
 </p>
