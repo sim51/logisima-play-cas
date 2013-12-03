@@ -3,5 +3,11 @@
 /logs
 /eclipse/
 /.settings/
+/.classpath
+/.project
 /tmp/
 /bin/
+/*.ipr
+/*.iws
+/.idea
+/build.custom.properties
