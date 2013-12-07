@@ -4,7 +4,10 @@
     
     <property name="debug" value="on" />
     <property name="optimize" value="true" />
+    
+    <property file="build.custom.properties" />
     <property file="build.properties" />
+    
 
     <path id="project.classpath">
         <pathelement path="${play.path}/framework/classes"/>
