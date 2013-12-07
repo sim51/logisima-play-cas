@@ -95,8 +95,10 @@ public class CASUtils {
      * @throws Throwable
      */
     private static String getCasServiceUrl() {
-        String casServiceUrl = Router.getFullUrl("modules.cas.SecureCAS.authenticate");
-        return casServiceUrl;
+        // String casServiceUrl = Router.getFullUrl("modules.cas.SecureCAS.authenticate");
+        // return casServiceUrl;
+        String appUrl = Play.configuration.getProperty("application.url");
+        return appUrl + "/authenticate";
     }
 
     /**
