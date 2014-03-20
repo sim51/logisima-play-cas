@@ -56,10 +56,11 @@ public class SecureCAS extends Controller {
         String originUrl = null;
         if (!Router.route(request).action.equals("modules.cas.SecureCAS.login")) {
             // we put into cache the url we come from
-            originUrl = request.method == "GET" ? request.url : "/";
+            originUrl = request.method.equals("GET") ? request.url : "/";
         } else {
             originUrl = APP_URL;
         }
+        Logger.debug("[SecureCAS]: adding url " + originUrl + " into cache with key " + "url_" + session.getId());
         Cache.add("url_" + session.getId(), StringUtils.isEmpty(originUrl) ? "/" : originUrl, "10min");
 
         // we redirect the user to the cas login page
@@ -169,6 +170,7 @@ public class SecureCAS extends Controller {
         if (isAuthenticated) {
             // we redirect to the original URL
             String url = (String) Cache.get("url_" + session.getId());
+            Logger.debug("[SecureCAS]: find url " + url + " into cache for the key " + "url_" + session.getId());
             Cache.delete("url_" + session.getId());
             if (url == null) {
                 url = "/";
@@ -240,9 +242,10 @@ public class SecureCAS extends Controller {
             }
         } else {
             Logger.debug("[SecureCAS]: user is not authenticated");
-            String originUrl = APP_URL;
+            String originUrl = request.method.equals("GET") ? request.url : APP_URL;
             // we put into cache the url we come from
             Cache.add("url_" + session.getId(), StringUtils.isEmpty(originUrl) ? "/" : originUrl, "10min");
+            Logger.debug("[SecureCAS]: adding url " + originUrl + " into cache with key " + "url_" + session.getId());
 
             // we redirect the user to the cas login page
             String casLoginUrl = CASUtils.getCasLoginUrl(true);
